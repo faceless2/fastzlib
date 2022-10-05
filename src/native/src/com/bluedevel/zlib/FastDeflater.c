@@ -120,7 +120,6 @@ Java_com_bluedevel_zlib_FastDeflater_init(JNIEnv *env, jclass cls, jint level,
 {
     z_stream *strm = calloc(1, sizeof(z_stream));
 
-    printf("here\n");
     if (strm == 0) {
         THROW(env, "java/lang/OutOfMemoryError", 0);
         return jlong_zero;
