@@ -29,6 +29,7 @@ $CC src/native/src/com/bluedevel/zlib/FastDeflater.c -o ${OPATH}/libfastdeflater
 if [ ! -f ${OPATH}/libz.${SUFFIX} ] ; then
     if [ ! -d zlib ] ; then
         git clone https://github.com/cloudflare/zlib
+#        git clone https://github.com/intel/zlib.git
     fi
     cd zlib
     ./configure

@@ -24,12 +24,24 @@ interchangeable.
 
 ## Results
 
-Results in a doubling of compression throughput using Cloudflare libraries vs standard JVM libraries.
+(Modified from the original at https://github.com/jasonk000/fastzlib)
 
-```
-Benchmark                              Mode  Cnt   Score   Error  Units
-BenchmarkCompressors.compressFastJvm  thrpt    5  43.760 ± 5.566  ops/s
-BenchmarkCompressors.compressJvm      thrpt    5  19.533 ± 2.931  ops/s
-```
+Some very rough numbers as of 2022-10-05
 
+|Java and OS|Default Compression|Best Compression
+|--|--|--
+|Default JVM Zip, Java 8, Linux/x86_64|24479|18053
+|Cloudflare Zip, Java 8, Linux x86_64|22576|16134
+|Intel Zip, Java 8, Linux x86_64|22620|16158
+
+|Default JVM Zip, Java 17, Linux/x86_64|18339|11849
+|Cloudflare Zip, Java 17, Linux x86_64|17960|11468
+|Intel Zip, Java 17, Linux x86_64|20308|13979
+
+|Default JVM Zip, Java 17, macOS/Arm|9875|6435
+|Cloudflare Zip, Java 8, Linux x86_64|10154|6390
+
+
+Conclusion: it's not worth substituting the Deflator in the JVM in 2022, or I've done
+something wrong.
 
