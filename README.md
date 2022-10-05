@@ -12,14 +12,15 @@ So, this project makes that possible.
 
 ## Setting up
 
-This requires some extra work over and above a normal JAR import to get it all working.
+(Modified from the original at https://github.com/jasonk000/fastzlib)
 
-1. Compile zlib for your platform, https://github.com/cloudflare/zlib
-2. Compile the native Java bindings for this zlib (code assumes zlib 1.2.8) - use `./compile-native.sh`.
-   You will need a C compiler, the JAVA_HOME environment variable set up, and a 
-3. Use gradle to compile the code into a JAR
-4. Run the target code, providing LD_LIBRARY_PATH environment variable on the java command line to allow java
-   to find the zlib implementation.
+1. Compile zlib for your platform by running `compile-native.sh`. This will put native files
+   under "natives". As many architectures as required can be in this folder.
+2. Run "build-jar.sh". This will create "fastzlib.jar" with the native libraries included in the Jar
+
+To use, add "fastzlib.jar" to the classpath and use `com.bluedevel.zlib.FastDeflater` where you would
+normally use `java.util.zip.Deflater` - the new implementatioj extends this class, so they are
+interchangeable.
 
 ## Results
 

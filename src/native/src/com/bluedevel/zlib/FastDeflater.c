@@ -79,11 +79,20 @@ Java_com_bluedevel_zlib_FastDeflater_initIDs(JNIEnv *env, jclass cls)
 {
     // load libz.so
     // this might need to be hard code, would appreciate PR to improve this
+    #ifdef __linux__
     void *libz = dlopen("libz.so", RTLD_LAZY | RTLD_GLOBAL);
     if (!libz) {
         THROW(env, "java/lang/UnsatisfiedLinkError", "Cannot load libz.so");
         return;
     }
+    #endif
+    #ifdef __APPLE__
+    void *libz = dlopen("libz.dylib", RTLD_LAZY | RTLD_GLOBAL);
+    if (!libz) {
+        THROW(env, "java/lang/UnsatisfiedLinkError", "Cannot load libz.dylib");
+        return;
+    }
+    #endif
     dlerror();
 
     // load symbols dynamically, so as not to use the jvm-provided functions
@@ -111,6 +120,7 @@ Java_com_bluedevel_zlib_FastDeflater_init(JNIEnv *env, jclass cls, jint level,
 {
     z_stream *strm = calloc(1, sizeof(z_stream));
 
+    printf("here\n");
     if (strm == 0) {
         THROW(env, "java/lang/OutOfMemoryError", 0);
         return jlong_zero;

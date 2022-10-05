@@ -25,12 +25,14 @@
 
 package com.bluedevel.zlib;
 
+import java.util.zip.Deflater;
+
 /**
  * This is a like-for-like replica of java.util.zip.Deflater, however since
  * that code is not very amenable to subclassing, the full implementation is
  * here.
  */
-public class FastDeflater {
+public class FastDeflater extends Deflater {
 
     private final ZStreamRef zsRef;
     private byte[] buf = new byte[0];
@@ -41,78 +43,60 @@ public class FastDeflater {
     private long bytesRead;
     private long bytesWritten;
 
-    /**
-     * Compression method for the deflate algorithm (the only one currently
-     * supported).
-     */
-    public static final int DEFLATED = 8;
+    private static void load(Class<?> cl, String libname) {
+        String arch = System.getProperty("os.arch").toLowerCase();
+        if (arch.contains("arm")) {
+            arch = "arm";
+        } else if (arch.contains("aarch64")) {
+            arch = "arm64";
+        } else if (arch.contains("86") || arch.contains("amd")) {
+            arch = arch.contains("64") ? "x86_64" : "i386";
+        } else {
+            throw new IllegalStateException("Can't determine arch from " + arch);
+        }
 
-    /**
-     * Compression level for no compression.
-     */
-    public static final int NO_COMPRESSION = 0;
+        String name = System.getProperty("os.name").toLowerCase();
+        String libpath;
+        if (name.contains("nix") || name.contains("nux")) {
+            libpath = "linux_" + arch + "/";
+            libname = "lib" + libname + ".so";
+        } else if (name.contains("win")) {
+            libpath = "windows_" + arch + "/";
+            libname = libname + ".dll";
+        } else if (name.contains("mac")) {
+            libpath = "macos_" + arch + "/";
+            libname = "lib" + libname + ".dylib";
+        } else {
+            throw new IllegalStateException("Can't determine os from " + name);
+        }
+        libpath = "/natives/" + libpath + libname;
 
-    /**
-     * Compression level for fastest compression.
-     */
-    public static final int BEST_SPEED = 1;
-
-    /**
-     * Compression level for best compression.
-     */
-    public static final int BEST_COMPRESSION = 9;
-
-    /**
-     * Default compression level.
-     */
-    public static final int DEFAULT_COMPRESSION = -1;
-
-    /**
-     * Compression strategy best used for data consisting mostly of small
-     * values with a somewhat random distribution. Forces more Huffman coding
-     * and less string matching.
-     */
-    public static final int FILTERED = 1;
-
-    /**
-     * Compression strategy for Huffman coding only.
-     */
-    public static final int HUFFMAN_ONLY = 2;
-
-    /**
-     * Default compression strategy.
-     */
-    public static final int DEFAULT_STRATEGY = 0;
-
-    /**
-     * Compression flush mode used to achieve best compression result.
-     *
-     * @see Deflater#deflate(byte[], int, int, int)
-     * @since 1.7
-     */
-    public static final int NO_FLUSH = 0;
-
-    /**
-     * Compression flush mode used to flush out all pending output; may
-     * degrade compression for some compression algorithms.
-     *
-     * @see Deflater#deflate(byte[], int, int, int)
-     * @since 1.7
-     */
-    public static final int SYNC_FLUSH = 2;
-
-    /**
-     * Compression flush mode used to flush out all pending output and
-     * reset the deflater. Using this mode too often can seriously degrade
-     * compression.
-     *
-     * @see Deflater#deflate(byte[], int, int, int)
-     * @since 1.7
-     */
-    public static final int FULL_FLUSH = 3;
+        java.net.URL url = cl.getResource(libpath);
+        if (url == null) {
+            throw new IllegalStateException("No native library \"" + libpath + "\"");
+        }
+        java.io.File tmpdir = null;
+        java.io.File tmp = null;
+        java.io.InputStream in = null;
+        try {
+            tmpdir = java.nio.file.Files.createTempDirectory("natives").toFile();
+            tmpdir.deleteOnExit();
+            tmp = new java.io.File(tmpdir, libname);
+            tmp.deleteOnExit();
+            in = url.openStream();
+            java.nio.file.Files.copy(in, tmp.toPath());
+            in.close();
+        } catch (java.io.IOException e) {
+            if (in != null) try { in.close(); } catch (java.io.IOException e2) {}
+            if (tmp != null) tmp.delete();
+            if (tmpdir != null) tmpdir.delete();
+        }
+        System.load(tmp.getAbsolutePath());
+    }
 
     static {
-        System.loadLibrary("fastdeflater");
+        load(FastDeflater.class, "z");
+        load(FastDeflater.class, "fastdeflater");
         initIDs();
     }
 
